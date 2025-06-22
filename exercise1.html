@@ -2,17 +2,56 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My First Game Tutorial</title>
+  <title>MakeCode Arcade with Save/Load</title>
 </head>
 <body>
-  <h1>My First Game Tutorial</h1>
+  <h1>MakeCode Arcade Embedded</h1>
+  <iframe
+    id="makecode-frame"
+    src="https://arcade.makecode.com/#editor"
+    width="100%"
+    height="600"
+    frameborder="0"
+  ></iframe>
 
-  <iframe 
-    width="100%" 
-    height="600" 
-    src="https://arcade.makecode.com/#editor" 
-    allowfullscreen 
-    frameborder="0">
-  </iframe>
+  <button onclick="saveProject()">Save Project</button>
+  <button onclick="loadProject()">Load Project</button>
+
+  <script>
+    const iframe = document.getElementById("makecode-frame");
+
+    // Example: Send save command to MakeCode iframe
+    function saveProject() {
+      // Ask MakeCode editor for project text (code)
+      iframe.contentWindow.postMessage({ type: "export-project" }, "*");
+    }
+
+    // Listen for message from MakeCode editor with project data
+    window.addEventListener("message", async (event) => {
+      if (event.data && event.data.type === "export-project") {
+        const projectData = event.data.project; // project JSON/text
+
+        // Send projectData to your backend API to save
+        await fetch("/api/saveProject", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project: projectData, userId: "user1" }),
+        });
+        alert("Project saved!");
+      }
+      else if (event.data && event.data.type === "import-project") {
+        // You can handle import confirmation here if needed
+      }
+    });
+
+    async function loadProject() {
+      // Get saved project from your backend API
+      const res = await fetch("/api/loadProject?userId=user1");
+      const { project } = await res.json();
+
+      // Send the project JSON/text back to MakeCode to load
+      iframe.contentWindow.postMessage({ type: "import-project", project }, "*");
+    }
+  </script>
 </body>
 </html>
